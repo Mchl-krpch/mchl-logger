@@ -1,0 +1,4 @@
+				-$debug version-0.1.0f
+ -Header of debugger: This is first version of mchl-logger
+				-string with offset 4*tab
+		-string with offset 2*tab
