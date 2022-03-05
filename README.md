@@ -6,3 +6,5 @@ A simple `library` for outputting information about the program's operation to a
 ```C
   LOG("\f\a-$TESITING! %s", "lol"); /*write log-info in file*/
 ```
+## process
+![c](https://raw.githubusercontent.com/Mchl-krpch/mchl-logger/main/img/logger.jpg)
