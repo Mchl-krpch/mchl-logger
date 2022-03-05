@@ -2,48 +2,60 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "test.h"
+#include "logger.h"
 
-DOCCER Logger2 = {0, 0};
-const DOCCER *const Logger = &Logger2;
+Logger OBJ = {nullptr, 0, 0};
+Logger *globalBase = &OBJ;
 
+void TAB_INC    ()              {OBJ.tabs++;}
+void TAB_DEC    ()              {OBJ.tabs++;}
+void TAB_SET    (unsigned tabs) {OBJ.tabs = tabs;}
+void CLOSE_FILE () {if (OBJ.file == nullptr) {return;}	else {fclose (OBJ.file);}}
 
-void TAB_INC    ()                 {Logger2.tabs++;}
-void TAB_DEC    ()                 {Logger2.tabs++;}
-void TAB_SET    (unsigned tabs)    {Logger2.tabs = tabs;}
-void DEF_FILE   (const char *name) {Logger2.file = fopen (name, "w");}
-void CLOSE_FILE () {if (Logger2.file == nullptr) {return;}	else {fclose (Logger2.file);}}
+void DEF_FILE   (const char *name) {
+	assert (name);
+	OBJ.file = fopen (name, "w");
+	atexit (logger_close_file);
+}
 
-void logger_write (const DOCCER *doc, const char* format, ...) {
-	assert (doc);
+void logger_close_file() {
+	Logger *log = globalBase;
+	if(OBJ.file){
+		fclose(OBJ.file);
+	}
+}
+
+void logger_write (Logger *log, const char* format, ...) {
+	assert (log);
+	assert (format);
 	va_list ap;
 	va_start (ap, format);
 
-	// write info in file
-	switch (mode (format)) {
+		// write info in file
+	switch (mode (log, format)) {
 		case output::in_console: {
-			for (unsigned tab = 0; tab < Logger2.tabs; tab++) {
+			for (unsigned tab = 0; tab < log->tabs; tab++) {
 				fprintf (stdout, "\t");
 			}
-			vfprintf (stdout, format + Logger2.skip, ap);
+			vfprintf (stdout, format + log->skip, ap);
 			break;
 		}
 		case output::in_file: {
-			for (unsigned tab = 0; tab < Logger2.tabs; tab++) {
-				fprintf (Logger2.file, "\t");
+			for (unsigned tab = 0; tab < log->tabs; tab++) {
+				fprintf (log->file, "\t");
 			}
-			vfprintf (Logger2.file, format + doc->skip, ap);
+			vfprintf (log->file, format + log->skip, ap);
 			break;
 		}
 		case output::everywhere: {
-			for (unsigned tab = 0; tab < Logger2.tabs; tab++) {
+			for (unsigned tab = 0; tab < log->tabs; tab++) {
 				fprintf (stdout, "\t");
 			}
-			vfprintf (stdout, format + Logger2.skip, ap);
-			for (unsigned tab = 0; tab < Logger2.tabs; tab++) {
-				fprintf (Logger2.file, "\t");
+			vfprintf (stdout, format + log->skip, ap);
+			for (unsigned tab = 0; tab < log->tabs; tab++) {
+				fprintf (log->file, "\t");
 			}
-			vfprintf (Logger2.file, format + doc->skip, ap);
+			vfprintf (log->file, format + log->skip, ap);
 			break;
 		}
 		case output::blocked:{break;}
@@ -53,39 +65,45 @@ void logger_write (const DOCCER *doc, const char* format, ...) {
 		}
 	}
 
-	fclose (Logger2.file);
 	va_end (ap);
-	fflush(doc->file);
+	fflush(log->file);
 	return;
 }
 
-output mode (const char *format) {
+output mode (Logger *log, const char *format) {
+	assert (log);
+	assert (format);
 	if (*format == '\a' && *(format + 1) != '\f') {
 		// printf ("\t-$it is console output.mode\n");
-		Logger2.skip += 1;
+		log->skip += 1;
 		return output::in_console;
 	}
 
-	if (*format == '\f' && *(format + 1) != '\a' && Logger2.file != nullptr) {
+	if (*format == '\f' && *(format + 1) != '\a' && log->file != nullptr) {
 		// printf ("\t-$it is file output.mode\n");
-		Logger2.skip += 1;
+		log->skip += 1;
 		return output::in_file;
 	}
 
 	if ((*format == '\f' && *(format + 1) == '\a') ||
 		(*format == '\a' && *(format + 1) == '\f') ) {
-		if (Logger2.file != nullptr) {
+		if (log->file != nullptr) {
 			// printf ("\t-$it is costom output.mode\n");
-			Logger2.skip += 2;
+			log->skip += 2;
 			return output::everywhere;
 		}
 		else {
 			// printf ("-$you haven't logfile, message will be written in console only\n");
-			Logger2.skip += 2;
+			log->skip += 2;
 			return output::in_console;
 		}
 	}
-
+	if (log->file != nullptr) {
+		return output::in_file;
+	}
+	else {
+		return output::in_console;
+	}
 	printf ("-$you haven't logfile. output in file is blocked\n");
 	return output::blocked;
 }
