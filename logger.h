@@ -1,33 +1,27 @@
-#ifndef _LOGGER_
-#define _LOGGER_
-
 #include <stdio.h>
 
-enum mode {
-	console = 0,
-	file,
+enum class output:char {
+	blocked =    0,
+	in_console = 1,
+	in_file    = 2,
+	everywhere = 3,
 };
 
-struct Log {
-	unsigned outputMode = console;
+struct DOCCER {
 	FILE    *file = nullptr;
 	unsigned tabs = 0;
+	unsigned skip = 0;
 };
 
-extern Log log;
+extern const DOCCER *const Logger;
+output mode (const char *format);
 
-void DEF_LOGFILE (const char* name);
-void CLOSE_LOG ();
 
-#define LOG(format, ...)\
-	for (unsigned tab = 0; tab < log.tabs; tab++) {\
-		fprintf (log.file, "\t");\
-	}\
-	fprintf (log.file, format, ##__VA_ARGS__);\
-	fprintf (log.file, "\n")
+#define LOG(format, ...) logger_write (Logger, format, ##__VA_ARGS__)
 
-void TAB_INC ();
-void TAB_DEC ();
-void TAB_SET (unsigned nTabs);
-
-#endif
+void logger_write (const DOCCER *Logger, const char* format, ...);
+void TAB_INC  ();
+void TAB_DEC  ();
+void TAB_SET  (unsigned tabs);
+void DEF_FILE (const char *name);
+void CLOSE_FILE ();
