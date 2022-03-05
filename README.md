@@ -7,5 +7,8 @@ A simple `library` for outputting information about the program's operation to a
   LOG("\f\a-$TESITING! %s", "lol"); /*write log-info in file*/
 ```
 ## process
-###### The library implements output to both the console and the file. You can specify
+###### The library implements output to both the console and the file. You can specify output to file or console. 
+- log file points to the log file for the whole project
+- tabs indicate the number of tabs to write before each line
+- skip needed to skip line modifiers
 ![c](https://raw.githubusercontent.com/Mchl-krpch/mchl-logger/main/img/logger.jpg)
